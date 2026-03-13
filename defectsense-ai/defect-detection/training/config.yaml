@@ -1,0 +1,31 @@
+experiment:
+  name: patchcore_mvtec
+
+data:
+  image_size: 224
+  batch_size: 16
+  num_workers: 4
+  train_dir: ./data/custom/train/good
+  test_dir: ./data/custom/test
+  extensions:
+    - .png
+    - .jpg
+    - .jpeg
+
+model:
+  backbone: wide_resnet50_2
+  layers:
+    - layer2
+    - layer3
+  coreset_sampling_ratio: 0.1
+  num_neighbors: 9
+
+inference:
+  threshold: 0.5
+
+training:
+  device: cpu
+  seed: 42
+
+logging:
+  log_interval: 10
