@@ -1,0 +1,11 @@
+# Large data & model files
+Dataset/
+checkpoints/
+predictions/
+__pycache__/
+*.pyc
+.DS_Store
+.claude/
+
+# Assignment PDF (not needed in repo)
+Assignment.pdf

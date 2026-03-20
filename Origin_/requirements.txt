@@ -1,0 +1,10 @@
+torch
+torchvision
+transformers
+pycocotools
+Pillow
+tqdm
+opencv-python
+scikit-learn
+matplotlib
+evaluate
