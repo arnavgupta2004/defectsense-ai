@@ -1,0 +1,39 @@
+# Render free tier = 512 MB RAM. This blueprint uses the low-memory Docker profile.
+# After deploy, set VITE_API_BASE_URL on Vercel to this service URL.
+services:
+  - type: web
+    name: defectsense-api
+    runtime: docker
+    dockerfilePath: ./defect-detection/Dockerfile
+    dockerContext: ./defect-detection
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: RENDER
+        value: "true"
+      - key: LOW_MEMORY
+        value: "true"
+      - key: APP_ENV
+        value: production
+      - key: MODEL_DEVICE
+        value: cpu
+      - key: IMAGE_SIZE
+        value: "128"
+      - key: CORESET_SAMPLING_RATIO
+        value: "0.04"
+      - key: INFERENCE_CHUNK_SIZE
+        value: "256"
+      - key: TRAIN_BATCH_SIZE
+        value: "2"
+      - key: BOOTSTRAP_TRAIN_IMAGES
+        value: "6"
+      - key: FEATURE_LAYERS
+        value: layer3
+      - key: NUM_NEIGHBORS
+        value: "3"
+      - key: CORS_ORIGINS
+        value: https://YOUR_VERCEL_APP.vercel.app,http://localhost:8080
+    disk:
+      name: defectsense-data
+      mountPath: /app/data
+      sizeGB: 1

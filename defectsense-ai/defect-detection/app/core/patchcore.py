@@ -15,9 +15,10 @@ class PatchcoreConfig:
     """Configuration for the PatchCore wrapper."""
 
     backbone: str = settings.model_backbone
-    layers: Tuple[str, ...] = ("layer2", "layer3")
-    coreset_sampling_ratio: float = 0.1
-    num_neighbors: int = 9
+    layers: Tuple[str, ...] = settings.feature_layer_tuple
+    coreset_sampling_ratio: float = settings.coreset_sampling_ratio
+    num_neighbors: int = settings.num_neighbors
+    inference_chunk_size: int = settings.inference_chunk_size
     memory_bank_path: Path = settings.model_memory_bank_path
     embedding_dim: int = 0
 
@@ -118,7 +119,10 @@ class PatchcoreWrapper:
         path = path or self.config.memory_bank_path
         if not path.exists():
             raise FileNotFoundError(f"Memory bank file not found at {path}")
-        checkpoint = torch.load(path, map_location=self.device)
+        try:
+            checkpoint = torch.load(path, map_location=self.device, weights_only=True)
+        except Exception:  # noqa: BLE001
+            checkpoint = torch.load(path, map_location=self.device, weights_only=False)
         self.memory_bank = checkpoint["memory_bank"].to(self.device)
         if "config" in checkpoint and isinstance(checkpoint["config"], dict):
             cfg = checkpoint["config"]
@@ -148,14 +152,17 @@ class PatchcoreWrapper:
 
         # Nearest neighbor distance to memory bank, chunked to reduce RAM usage.
         bank = self.memory_bank  # (M, C)
-        chunk = 8192
+        chunk = max(64, int(self.config.inference_chunk_size))
         dists_min: List[torch.Tensor] = []
+        k = max(1, min(int(self.config.num_neighbors), bank.shape[0]))
         with torch.no_grad():
             for i in range(0, patches.shape[0], chunk):
                 p = patches[i : i + chunk]
-                # (chunk, M)
                 d = torch.cdist(p, bank, p=2)
-                dmin = d.min(dim=1).values
+                if k == 1:
+                    dmin = d.min(dim=1).values
+                else:
+                    dmin = d.topk(k, largest=False, dim=1).values.mean(dim=1)
                 dists_min.append(dmin)
         dist = torch.cat(dists_min, dim=0)  # (P,)
 

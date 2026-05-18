@@ -1,0 +1,49 @@
+services:
+  backend:
+    build:
+      context: ./defect-detection
+      dockerfile: Dockerfile
+    container_name: defectsense-api
+    environment:
+      APP_ENV: production
+      DB_URL: sqlite:////app/data/defects.db
+      UPLOAD_DIR: /app/data/uploads
+      TRAIN_DIR: /app/data/custom/train/good
+      MODEL_MEMORY_BANK_PATH: /app/artifacts/patchcore_memory_bank.pt
+      MODEL_DEVICE: cpu
+      IMAGE_SIZE: "224"
+      CORS_ORIGINS: http://localhost,http://localhost:8080,http://127.0.0.1
+    volumes:
+      - model-artifacts:/app/artifacts
+      - upload-data:/app/data/uploads
+      - db-data:/app/data
+      - train-data:/app/data/custom/train/good
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ""
+    container_name: defectsense-ui
+    ports:
+      - "8080:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  model-artifacts:
+  upload-data:
+  db-data:
+  train-data:

@@ -14,18 +14,16 @@ IMAGENET_MEAN: Tuple[float, float, float] = (0.485, 0.456, 0.406)
 IMAGENET_STD: Tuple[float, float, float] = (0.229, 0.224, 0.225)
 
 
-def _to_numpy(image: ImageLike) -> np.ndarray:
-    """Convert a PIL or numpy image to a BGR numpy array."""
+def _to_bgr(image: ImageLike) -> np.ndarray:
+    """Convert a PIL or RGB numpy image to a BGR numpy array."""
 
     if isinstance(image, Image.Image):
         image = np.array(image)
     if image.ndim == 2:
-        image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+        return cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
     if image.shape[2] == 4:
-        image = cv2.cvtColor(image, cv2.COLOR_RGBA2BGR)
-    else:
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    return image
+        return cv2.cvtColor(image, cv2.COLOR_RGBA2BGR)
+    return cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
 
 def preprocess_image(
@@ -42,7 +40,7 @@ def preprocess_image(
     - Apply ImageNet normalization
     """
 
-    bgr = _to_numpy(image)
+    bgr = _to_bgr(image)
     resized = cv2.resize(bgr, (size, size), interpolation=cv2.INTER_AREA)
     if gaussian_ksize > 1:
         resized = cv2.GaussianBlur(resized, (gaussian_ksize, gaussian_ksize), 0)

@@ -9,7 +9,8 @@ import numpy as np
 import torch
 
 from app.core.anomaly_map import generate_anomaly_heatmap
-from app.core.patchcore import PatchcoreWrapper, PatchcoreConfig
+from app.core.patchcore import PatchcoreConfig, PatchcoreWrapper
+from app.core.preprocessor import preprocess_image
 from app.utils.metrics import (
     compute_average_precision,
     compute_confusion,
@@ -70,16 +71,16 @@ def main() -> None:
     anomaly_maps_all: List[np.ndarray] = []
     gt_masks_all: List[np.ndarray] = []
 
+    image_size = int(cfg["data"]["image_size"])
     for img, label in zip(images, labels, strict=False):
-        resized = cv2.resize(img, (cfg["data"]["image_size"], cfg["data"]["image_size"]))
-        tensor = torch.from_numpy(resized).float().permute(2, 0, 1) / 255.0
-        tensor = tensor.unsqueeze(0)
+        tensor = preprocess_image(img, size=image_size).unsqueeze(0)
         scores, maps = model.predict(tensor)
         score = float(scores[0].item())
         anomaly_map = maps[0, 0]
+        display = cv2.resize(img, (image_size, image_size))
         heatmap = generate_anomaly_heatmap(
             anomaly_map,
-            image_size=(resized.shape[0], resized.shape[1]),
+            image_size=(display.shape[0], display.shape[1]),
         )
         image_scores.append(score)
         y_true.append(label)

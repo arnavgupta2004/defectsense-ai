@@ -54,8 +54,19 @@ class DetectionResultRead(DetectionResultBase):
 
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
+
+
+class DashboardStats(BaseModel):
+    """Aggregated metrics for the dashboard page."""
+
+    total_inspected_today: int
+    pass_rate: float
+    defects_detected: int
+    avg_anomaly_score: float
+    auroc: float
+    defect_distribution: List[dict]
+    recent_results: List[DetectionResultRead]
 
 
 class UploadResponse(BaseModel):
@@ -84,6 +95,13 @@ class TrainStatus(BaseModel):
     pixel_level_auroc: Optional[float] = None
     f1_score: Optional[float] = None
     memory_bank_size: Optional[int] = None
+    threshold: Optional[float] = None
+
+
+class ThresholdUpdate(BaseModel):
+    """Update the runtime detection threshold."""
+
+    threshold: float = Field(ge=0.0, le=1.0)
 
 
 class ResultsFilter(BaseModel):

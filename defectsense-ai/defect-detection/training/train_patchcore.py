@@ -8,6 +8,7 @@ import cv2
 import torch
 import yaml
 
+from app.core.config import settings
 from app.core.patchcore import PatchcoreConfig, PatchcoreWrapper
 from app.core.preprocessor import preprocess_batch
 
@@ -43,23 +44,20 @@ def main() -> None:
 
     patchcore_cfg = PatchcoreConfig(
         backbone=cfg["model"]["backbone"],
-        layers=tuple(cfg["model"]["layers"]),
-        coreset_sampling_ratio=cfg["model"]["coreset_sampling_ratio"],
-        num_neighbors=cfg["model"]["num_neighbors"],
+        layers=settings.feature_layer_tuple or tuple(cfg["model"]["layers"]),
+        coreset_sampling_ratio=settings.coreset_sampling_ratio,
+        num_neighbors=settings.num_neighbors,
+        inference_chunk_size=settings.inference_chunk_size,
     )
     wrapper = PatchcoreWrapper(device=device, config=patchcore_cfg)
 
-    # anomalib expects a folder datamodule root, with normal images in a subdir.
-    # Our config points to .../train/good, so we convert to root=.../train and normal_dir=good.
     train_good_dir = Path(cfg["data"]["train_dir"])
     if not train_good_dir.exists():
         raise SystemExit(f"Training directory not found: {train_good_dir}")
-    root_dir = train_good_dir.parent
-    normal_dir_name = train_good_dir.name
 
     extensions = tuple(cfg["data"]["extensions"])
-    batch_size = int(cfg["data"]["batch_size"])
-    image_size = int(cfg["data"]["image_size"])
+    batch_size = settings.train_batch_size
+    image_size = settings.image_size
 
     # Validate there are images before starting the engine.
     image_paths = collect_image_paths(train_good_dir, list(extensions))

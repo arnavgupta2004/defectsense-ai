@@ -1,11 +1,15 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import JSON, Column, DateTime, Float, Integer, String, Text
 
 from app.database import Base
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 class DetectionResult(Base):
@@ -22,5 +26,5 @@ class DetectionResult(Base):
     defect_regions: Any = Column(JSON, nullable=True)
     annotated_image_base64: str = Column(Text, nullable=True)
     inference_time_ms: float = Column(Float, nullable=False)
-    timestamp: datetime = Column(DateTime, default=datetime.utcnow, nullable=False)
+    timestamp: datetime = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
 

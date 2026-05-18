@@ -1,7 +1,16 @@
 import axios from 'axios';
 
+const rawBase = (import.meta.env.VITE_API_BASE_URL ?? '').trim().replace(/\/$/, '');
+
+if (import.meta.env.PROD && !rawBase) {
+  console.warn(
+    '[DefectSense] VITE_API_BASE_URL is not set. Set it in Vercel → Environment Variables to your FastAPI host (e.g. Render/Railway).',
+  );
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000',
+  baseURL: rawBase,
+  timeout: 120_000,
 });
 
 // -----------------------------
@@ -40,6 +49,17 @@ interface BackendTrainStatus {
   pixel_level_auroc?: number | null;
   f1_score?: number | null;
   memory_bank_size?: number | null;
+  threshold?: number | null;
+}
+
+interface BackendDashboardStats {
+  total_inspected_today: number;
+  pass_rate: number;
+  defects_detected: number;
+  avg_anomaly_score: number;
+  auroc: number;
+  defect_distribution: { name: string; value: number; color: string }[];
+  recent_results: BackendDetectionResult[];
 }
 
 // -----------------------------
@@ -70,18 +90,17 @@ export interface DefectRegion {
 }
 
 export interface ModelStatus {
-  status: 'trained' | 'untrained' | 'training';
+  status: 'trained' | 'untrained' | 'training' | 'error';
   memory_bank_size: number;
   training_images: number;
   last_trained: string | null;
+  message?: string | null;
   metrics: {
     auroc: number;
     f1: number;
     avg_precision: number;
   };
   threshold: number;
-  training_progress?: number;
-  training_log?: string[];
 }
 
 export interface DashboardStats {
@@ -113,18 +132,15 @@ const mapBackendSeverity = (severity: BackendSeverity): DefectRegion['severity']
   }
 };
 
-const mapBackendDetectionResult = (r: BackendDetectionResult): DetectionResult => ({
+export const mapBackendDetectionResult = (r: BackendDetectionResult): DetectionResult => ({
   image_id: r.image_id,
   filename: r.filename,
-  // Backend does not know product category; keep a generic label.
   category: 'Custom',
   status: mapBackendStatus(r.status),
   anomaly_score: r.anomaly_score,
   threshold: r.threshold,
   inference_time_ms: r.inference_time_ms,
   timestamp: r.timestamp,
-  // Original image is displayed from local preview in Inspect page,
-  // so we leave URLs empty for now.
   original_image_url: '',
   heatmap_url: '',
   annotated_image_url: r.annotated_image ? `data:image/png;base64,${r.annotated_image}` : '',
@@ -133,7 +149,7 @@ const mapBackendDetectionResult = (r: BackendDetectionResult): DetectionResult =
     bbox: d.bbox,
     severity: mapBackendSeverity(d.severity),
     area_percent: d.area_percent,
-    label: `Region ${idx + 1}`,
+    label: `${d.severity} · Region ${idx + 1}`,
   })),
 });
 
@@ -141,18 +157,20 @@ const mapBackendTrainStatus = (s: BackendTrainStatus): ModelStatus => {
   let status: ModelStatus['status'] = 'untrained';
   if (s.status === 'READY') status = 'trained';
   else if (s.status === 'TRAINING') status = 'training';
+  else if (s.status === 'ERROR') status = 'error';
 
   return {
     status,
     memory_bank_size: s.memory_bank_size ?? 0,
     training_images: 0,
     last_trained: s.last_trained_at,
+    message: s.message ?? undefined,
     metrics: {
       auroc: s.image_level_auroc ?? 0,
       f1: s.f1_score ?? 0,
       avg_precision: 0,
     },
-    threshold: 0.5,
+    threshold: s.threshold ?? 0.5,
   };
 };
 
@@ -182,8 +200,10 @@ export const getAllResults = async () => {
   return data.map(mapBackendDetectionResult);
 };
 
-export const trainModel = async () => {
-  const { data } = await api.post<BackendTrainStatus>('/api/train', {});
+export const trainModel = async (datasetPath?: string) => {
+  const { data } = await api.post<BackendTrainStatus>('/api/train', {
+    dataset_path: datasetPath ?? null,
+  });
   return mapBackendTrainStatus(data);
 };
 
@@ -192,11 +212,17 @@ export const getModelStatus = async () => {
   return mapBackendTrainStatus(data);
 };
 
-export const getDashboardStats = async () => {
-  // Backend does not currently expose /api/dashboard; this will fall back to
-  // mocked data in the Dashboard page when the request fails.
-  const { data } = await api.get<DashboardStats>('/api/dashboard');
-  return data;
+export const updateThreshold = async (threshold: number) => {
+  const { data } = await api.patch<BackendTrainStatus>('/api/model/threshold', { threshold });
+  return mapBackendTrainStatus(data);
+};
+
+export const getDashboardStats = async (): Promise<DashboardStats> => {
+  const { data } = await api.get<BackendDashboardStats>('/api/dashboard');
+  return {
+    ...data,
+    recent_results: data.recent_results.map(mapBackendDetectionResult),
+  };
 };
 
 export default api;

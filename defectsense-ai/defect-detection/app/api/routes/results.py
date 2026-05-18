@@ -8,7 +8,8 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.database import DetectionResult as DetectionResultORM
-from app.models.schemas import DetectionResultRead, ResultsFilter
+from app.models.schemas import DetectionResultRead
+from app.repositories.detection import _orm_to_read
 
 
 router = APIRouter(tags=["results"])
@@ -28,18 +29,7 @@ def get_result(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"No result found for image id {image_id}.",
         )
-    return DetectionResultRead(
-        id=orm.id,
-        image_id=orm.image_id,
-        filename=orm.filename,
-        status=orm.status,
-        anomaly_score=orm.anomaly_score,
-        threshold=orm.threshold,
-        defect_regions=orm.defect_regions or [],
-        annotated_image=orm.annotated_image_base64 or "",
-        inference_time_ms=orm.inference_time_ms,
-        timestamp=orm.timestamp,
-    )
+    return _orm_to_read(orm)
 
 
 @router.get("/results", response_model=List[DetectionResultRead])
@@ -58,21 +48,4 @@ def list_results(
         stmt = stmt.where(DetectionResultORM.filename.contains(filename_contains))
     stmt = stmt.order_by(DetectionResultORM.timestamp.desc()).limit(limit)
 
-    results: List[DetectionResultRead] = []
-    for orm in db.scalars(stmt).all():
-        results.append(
-            DetectionResultRead(
-                id=orm.id,
-                image_id=orm.image_id,
-                filename=orm.filename,
-                status=orm.status,
-                anomaly_score=orm.anomaly_score,
-                threshold=orm.threshold,
-                defect_regions=orm.defect_regions or [],
-                annotated_image=orm.annotated_image_base64 or "",
-                inference_time_ms=orm.inference_time_ms,
-                timestamp=orm.timestamp,
-            )
-        )
-    return results
-
+    return [_orm_to_read(orm) for orm in db.scalars(stmt).all()]
