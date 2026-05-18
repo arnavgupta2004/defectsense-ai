@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import asyncio
+import logging
+import threading
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Dict
@@ -13,21 +16,20 @@ from app.core.runtime_tuning import configure_runtime_memory
 from app.database import get_db, init_db
 from app.models.schemas import ThresholdUpdate, TrainStatus
 from app.runtime_settings import get_threshold, set_threshold
-from app.services.model_service import memory_bank_size, reload_patchcore
+from app.services.model_service import (
+    memory_bank_size,
+    register_deferred_model_load,
+    reload_patchcore,
+)
 from app.state import TRAINING_STATE
 
 from app.api.routes import upload, detect, train, results, dashboard  # type: ignore[import-not-found]
 
+logger = logging.getLogger(__name__)
 
-@asynccontextmanager
-async def lifespan(_app: FastAPI):
-    """Initialize database and attempt to load the PatchCore memory bank."""
 
-    configure_runtime_memory()
-    init_db()
-    settings.upload_dir.mkdir(parents=True, exist_ok=True)
-    settings.model_memory_bank_path.parent.mkdir(parents=True, exist_ok=True)
-    settings.train_dir.mkdir(parents=True, exist_ok=True)
+def _deferred_model_load() -> None:
+    """Load PatchCore after ASGI startup so Render can bind the port under 512 MB."""
 
     try:
         reload_patchcore()
@@ -39,9 +41,47 @@ async def lifespan(_app: FastAPI):
                     "message": "Loaded memory bank from disk.",
                 }
             )
+        else:
+            TRAINING_STATE.update({"status": "IDLE", "message": "No trained model on disk."})
     except Exception:  # noqa: BLE001
-        TRAINING_STATE.update({"status": "IDLE", "message": "No trained model on disk."})
+        logger.exception("PatchCore load failed during deferred startup")
+        TRAINING_STATE.update(
+            {
+                "status": "IDLE",
+                "message": "Failed to load model; see server logs.",
+            }
+        )
 
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Initialize database; load PatchCore in a background thread after startup."""
+
+    configure_runtime_memory()
+    init_db()
+    settings.upload_dir.mkdir(parents=True, exist_ok=True)
+    settings.model_memory_bank_path.parent.mkdir(parents=True, exist_ok=True)
+    settings.train_dir.mkdir(parents=True, exist_ok=True)
+
+    TRAINING_STATE.update(
+        {
+            "status": "LOADING",
+            "memory_bank_size": None,
+            "message": "Loading PatchCore model…",
+        }
+    )
+
+    def _start_deferred_load() -> None:
+        thread = threading.Thread(
+            target=_deferred_model_load,
+            name="patchcore-load",
+            daemon=True,
+        )
+        register_deferred_model_load(thread)
+        thread.start()
+
+    loop = asyncio.get_running_loop()
+    loop.call_soon(_start_deferred_load)
     yield
 
 

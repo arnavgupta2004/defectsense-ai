@@ -10,16 +10,33 @@ from app.core.patchcore import PatchcoreWrapper, build_patchcore
 
 _lock = threading.Lock()
 _model: Optional[PatchcoreWrapper] = None
+_deferred_load_thread: Optional[threading.Thread] = None
+
+
+def register_deferred_model_load(thread: threading.Thread) -> None:
+    """Track the background PatchCore load so get_patchcore can wait instead of duplicating work."""
+
+    global _deferred_load_thread
+    _deferred_load_thread = thread
 
 
 def get_patchcore() -> PatchcoreWrapper:
     """Return the process-wide PatchCore wrapper (lazy init)."""
 
     global _model
-    if _model is None:
-        with _lock:
-            if _model is None:
-                _model = build_patchcore(device=settings.model_device)
+    if _model is not None:
+        return _model
+
+    t = _deferred_load_thread
+    if t is not None and t.is_alive():
+        t.join(timeout=180.0)
+
+    if _model is not None:
+        return _model
+
+    with _lock:
+        if _model is None:
+            _model = build_patchcore(device=settings.model_device)
     return _model
 
 

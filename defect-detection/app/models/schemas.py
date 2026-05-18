@@ -88,7 +88,7 @@ class TrainRequest(BaseModel):
 class TrainStatus(BaseModel):
     """Model training status and recent metrics."""
 
-    status: Literal["IDLE", "TRAINING", "READY", "ERROR"]
+    status: Literal["IDLE", "LOADING", "TRAINING", "READY", "ERROR"]
     last_trained_at: Optional[datetime] = None
     message: Optional[str] = None
     image_level_auroc: Optional[float] = None

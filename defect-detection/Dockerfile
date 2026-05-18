@@ -33,7 +33,6 @@ ENV LOW_MEMORY=1 \
 
 RUN python scripts/bootstrap_data.py && python -m training.train_patchcore
 
-COPY .env.example .env
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

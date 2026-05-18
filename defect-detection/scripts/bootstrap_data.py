@@ -10,12 +10,22 @@ import cv2
 import numpy as np
 
 
+def _render_or_low_memory() -> bool:
+    r = os.getenv("RENDER", "").strip().lower()
+    l = os.getenv("LOW_MEMORY", "").strip().lower()
+    return r in ("1", "true", "yes") or l in ("1", "true", "yes")
+
+
 def _image_size() -> int:
-    return int(os.getenv("IMAGE_SIZE", "224"))
+    default = "128" if _render_or_low_memory() else "224"
+    raw = os.getenv("IMAGE_SIZE", default) or default
+    return int(raw)
 
 
 def _train_count() -> int:
-    return int(os.getenv("BOOTSTRAP_TRAIN_IMAGES", "12"))
+    default = "6" if _render_or_low_memory() else "12"
+    raw = os.getenv("BOOTSTRAP_TRAIN_IMAGES", default) or default
+    return int(raw)
 
 
 def main() -> None:

@@ -34,7 +34,8 @@ ENV LOW_MEMORY=1 \
 
 RUN python scripts/bootstrap_data.py && python -m training.train_patchcore
 
-COPY defect-detection/.env.example .env
+# Do not COPY .env here: .env.example defaults IMAGE_SIZE=224 and would confuse
+# pydantic / bootstrap if merged without real container env vars on some hosts.
 COPY defect-detection/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

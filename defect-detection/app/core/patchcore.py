@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gc
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List, Tuple
@@ -128,6 +129,8 @@ class PatchcoreWrapper:
             cfg = checkpoint["config"]
             if "embedding_dim" in cfg:
                 self.config.embedding_dim = int(cfg["embedding_dim"])
+        del checkpoint
+        gc.collect()
         self._memory_bank_built = True
 
     def predict(self, batch: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
