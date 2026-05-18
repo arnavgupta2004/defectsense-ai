@@ -15,8 +15,8 @@ Use this split:
 
 1. Push this repo to GitHub.
 2. Go to [render.com](https://render.com) → **New** → **Blueprint** (or Web Service from Docker).
-3. Point to `defectsense-ai/render.yaml` or:
-   - **Root directory:** `defectsense-ai/defect-detection`
+3. Point to `render.yaml` at the **repository root**, or:
+   - **Root directory:** `defect-detection`
    - **Dockerfile:** `Dockerfile`
 4. Set environment variable:
    ```text
@@ -39,7 +39,7 @@ If the service crashes with **OOM**, upgrade to Render **Starter (2 GB)** or set
 ### Via dashboard
 
 1. [vercel.com/new](https://vercel.com/new) → Import your Git repo.
-2. **Root Directory:** `defectsense-ai/Frontend`
+2. **Root Directory:** `Frontend`
 3. Framework: **Vite** (auto-detected).
 4. **Environment variables** (Production):
 
@@ -52,7 +52,7 @@ If the service crashes with **OOM**, upgrade to Render **Starter (2 GB)** or set
 ### Via CLI
 
 ```bash
-cd defectsense-ai/Frontend
+cd Frontend
 npm i -g vercel
 vercel
 # Set VITE_API_BASE_URL when prompted, or in Project Settings → Environment Variables
@@ -88,7 +88,7 @@ API health check: `https://your-api-host/api/health`
 
 | Setting | Value |
 |---------|--------|
-| Root Directory | `defectsense-ai/Frontend` |
+| Root Directory | `Frontend` |
 | Build Command | `npm run build` |
 | Output Directory | `dist` |
 | Install Command | `npm ci` |

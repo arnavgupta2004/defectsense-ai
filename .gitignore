@@ -1,0 +1,47 @@
+# Virtual Environment
+**/.venv/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Node
+**/node_modules/
+Frontend/dist/
+
+# IDEs
+.idea/
+.vscode/
+
+# MacOS
+.DS_Store
+
+# Local env & secrets
+.env
+**/.env
+!.env.example
+!**/.env.example
+
+# Datasets and Models (generated / large)
+*.pt
+*.pth
+*.onnx
+*.weights
+dataset/
+datasets/
+defect-detection/data/custom/
+defect-detection/artifacts/
+defect-detection/uploads/
+defect-detection/*.db
+defect-detection/defects.db
+
+runs/
+*.log

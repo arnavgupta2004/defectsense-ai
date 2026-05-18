@@ -1,4 +1,6 @@
-# Render free tier = 512 MB RAM. This blueprint uses the low-memory Docker profile.
+# Render free tier = 512 MB RAM (low-memory Docker profile).
+# Free instances cannot use persistent disks — remove the disk block for free tier.
+# For persistent DB/uploads: use Starter ($7+) and uncomment the disk block below.
 # After deploy, set VITE_API_BASE_URL on Vercel to this service URL.
 services:
   - type: web
@@ -33,7 +35,8 @@ services:
         value: "3"
       - key: CORS_ORIGINS
         value: https://YOUR_VERCEL_APP.vercel.app,http://localhost:8080
-    disk:
-      name: defectsense-data
-      mountPath: /app/data
-      sizeGB: 1
+# Paid (starter+) only:
+#    disk:
+#      name: defectsense-data
+#      mountPath: /app/data
+#      sizeGB: 1

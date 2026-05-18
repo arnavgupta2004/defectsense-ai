@@ -22,6 +22,6 @@ Or use Docker from the repo root: `docker compose up --build`.
 
 ## Vercel
 
-Deploy only this folder to Vercel. Set **Root Directory** to `defectsense-ai/Frontend` if importing from the monorepo root.
+Deploy only this folder to Vercel. Set **Root Directory** to `Frontend` (when the Git repo root is the monorepo root).
 
 **Required env var:** `VITE_API_BASE_URL` = your hosted FastAPI URL (see [../docs/VERCEL.md](../docs/VERCEL.md)).
