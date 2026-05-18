@@ -17,7 +17,7 @@ Use this split:
 2. Go to [render.com](https://render.com) → **New** → **Blueprint** (or Web Service from Docker).
 3. Point to `render.yaml` at the **repository root**, or:
    - **Root directory:** `defect-detection`
-   - **Dockerfile:** `Dockerfile`
+   - **Dockerfile path:** `./Dockerfile` (relative to that root — **not** `defect-detection/Dockerfile`, or Render looks for `defect-detection/defect-detection` and fails).
 4. Set environment variable:
    ```text
    CORS_ORIGINS=https://your-app.vercel.app,http://localhost:8080
