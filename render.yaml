@@ -6,10 +6,14 @@ services:
   - type: web
     name: defectsense-api
     runtime: docker
-    # Paths below are relative to rootDir (Render monorepo behavior).
-    rootDir: defect-detection
-    dockerfilePath: ./Dockerfile
-    dockerContext: .
+    # Repo-root paths. Do NOT also set "Root Directory" = defect-detection in the
+    # Render dashboard for this service — that stacks with these paths and breaks
+    # with lstat .../defect-detection/defect-detection.
+    dockerfilePath: ./defect-detection/Dockerfile
+    dockerContext: ./defect-detection
+    buildFilter:
+      paths:
+        - defect-detection/**
     plan: free
     healthCheckPath: /api/health
     envVars:
