@@ -1,0 +1,17 @@
+# Repo-root API image (Dockerfile.api) — keep context small and fast.
+.git
+.github
+Frontend
+**/node_modules
+**/.venv
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+defect-detection/.env
+defect-detection/data/custom
+defect-detection/artifacts
+defect-detection/uploads
+defect-detection/*.db
+defect-detection/notebooks
+defect-detection/tests
+*.log

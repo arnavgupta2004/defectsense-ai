@@ -16,8 +16,8 @@ Use this split:
 1. Push this repo to GitHub.
 2. Go to [render.com](https://render.com) → **New** → **Blueprint** (or Web Service from Docker).
 3. Point to `render.yaml` at the **repository root**, or connect Docker manually:
-   - **Blueprint:** leave the service **Root Directory** in the dashboard **empty** (the YAML uses repo-root `dockerfilePath` / `dockerContext`). If you set Root Directory to `defect-detection` **and** keep paths like `./defect-detection/Dockerfile`, Render resolves `defect-detection/defect-detection` and the deploy fails.
-   - **Manual Docker (no blueprint):** either leave **Root Directory** empty and set **Dockerfile path** to `defect-detection/Dockerfile`, **or** set **Root Directory** to `defect-detection` and **Dockerfile path** to `./Dockerfile` — pick one style, not both.
+   - **Blueprint:** leave **Root Directory** empty. The blueprint builds with **`Dockerfile.api`** at the repo root and **`dockerContext: .`** so every `COPY defect-detection/...` resolves. Do **not** set Root Directory to `defect-detection` for this service (that doubles paths → `defect-detection/defect-detection`).
+   - **Manual Docker (no blueprint):** leave **Root Directory** empty, set **Dockerfile path** to `Dockerfile.api`, and set **Docker build context** to `.` (repo root). Alternatively, use **`defect-detection/Dockerfile`** with **Root Directory** `defect-detection` and Dockerfile `./Dockerfile` — never mix repo-root Dockerfile paths with a `defect-detection` root directory.
 4. Set environment variable:
    ```text
    CORS_ORIGINS=https://your-app.vercel.app,http://localhost:8080

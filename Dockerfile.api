@@ -1,4 +1,6 @@
-# Build with context = this directory (docker-compose). Render uses repo-root Dockerfile.api.
+# Repo-root Dockerfile for Render (build context = repository root).
+# Local / docker-compose: use defect-detection/Dockerfile with context ./defect-detection.
+
 FROM python:3.11-slim-bookworm
 
 WORKDIR /app
@@ -8,17 +10,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+COPY defect-detection/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app ./app
-COPY training ./training
-COPY scripts ./scripts
-COPY data/download_mvtec.py ./data/download_mvtec.py
+COPY defect-detection/app ./app
+COPY defect-detection/training ./training
+COPY defect-detection/scripts ./scripts
+COPY defect-detection/data/download_mvtec.py ./data/download_mvtec.py
 
 RUN mkdir -p /app/data/uploads /app/data/custom/train/good /app/artifacts
 
-# Low-memory profile: bake model at build time so Render startup stays under 512 MB.
 ENV LOW_MEMORY=1 \
     RENDER=true \
     IMAGE_SIZE=128 \
@@ -33,8 +34,8 @@ ENV LOW_MEMORY=1 \
 
 RUN python scripts/bootstrap_data.py && python -m training.train_patchcore
 
-COPY .env.example .env
-COPY entrypoint.sh /entrypoint.sh
+COPY defect-detection/.env.example .env
+COPY defect-detection/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]

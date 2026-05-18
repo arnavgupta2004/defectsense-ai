@@ -6,11 +6,10 @@ services:
   - type: web
     name: defectsense-api
     runtime: docker
-    # Repo-root paths. Do NOT also set "Root Directory" = defect-detection in the
-    # Render dashboard for this service — that stacks with these paths and breaks
-    # with lstat .../defect-detection/defect-detection.
-    dockerfilePath: ./defect-detection/Dockerfile
-    dockerContext: ./defect-detection
+    # Repo-root context + Dockerfile.api so COPY paths resolve even if Render
+    # ignores dockerContext (common when only Dockerfile path is set in the UI).
+    dockerfilePath: ./Dockerfile.api
+    dockerContext: .
     buildFilter:
       paths:
         - defect-detection/**

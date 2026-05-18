@@ -75,6 +75,7 @@ npm run dev
 
 ```text
 repository root/
+├── Dockerfile.api      # Render: Docker build from repo root
 ├── defect-detection/   # FastAPI + PatchCore pipeline
 ├── Frontend/           # React + Vite UI
 ├── scripts/
@@ -117,7 +118,7 @@ See **[docs/VERCEL.md](docs/VERCEL.md)** for step-by-step instructions.
 
 Quick summary:
 
-1. Deploy API with `render.yaml` or Docker.
+1. Deploy API with `render.yaml` (uses root `Dockerfile.api`) or Docker per [docs/VERCEL.md](docs/VERCEL.md).
 2. Vercel → Root Directory: `Frontend`
 3. Set `VITE_API_BASE_URL=https://your-api-host`
 4. Set API `CORS_ORIGINS` to your `*.vercel.app` URL.
